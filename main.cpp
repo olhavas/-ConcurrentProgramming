@@ -12,7 +12,7 @@
 
 const int32_t DSIZE = 10000000;
 
-void rand_and_save()
+void randAndSave()
 {
     std::ofstream myfile;
     myfile.open ("../inputdata.txt");
@@ -22,7 +22,7 @@ void rand_and_save()
     }
     myfile.close();
 }
-void read_from_file( std::vector<int> &data,  std::string nameoffile)
+void readFromFile(std::vector<int> &data, std::string nameoffile)
 {
     std::ifstream in("../"+nameoffile, std::ios::in);
 
@@ -38,28 +38,8 @@ void read_from_file( std::vector<int> &data,  std::string nameoffile)
 
 }
 
-void writeToFile(std::array<int, 256> data, std::string nameoffile)
-{
-    std::ofstream  out;
-    out.open("../"+nameoffile);
-    for(auto i =0; i < data.size(); i++)
-    {
-        out<<i<<'='<<data[i]<<'\n';
-    }
-    out.close();
-}
 
-std::vector<int> readFromFile(std::string nameOfFile) {
-    std::ifstream in("../"+nameOfFile, std::ios::in);
-    std::vector<int> result;
-    if(in.is_open()) {
-        int x;
-        while(in >> x) {
-            result.push_back(static_cast<int>(x));
-        }
-        in.close();
-    }
-}
+
 
 struct Result {
 
@@ -72,10 +52,27 @@ struct Result {
     }
 };
 
+void writeToFile(Result* result, std::string nameoffile)
+{
+    std::ofstream  out;
+    out.open("../"+nameoffile);
+    for(auto i =0; i < result->histogram.size(); i++)
+    {
+        out<<i<<'='<<result->histogram[i]<<'\n';
+    }
+    auto suma = 0;
+    for(auto x : result->histogram) {
+        suma+=x;
+    }
+    out<<"sum=" << suma;
+
+    out.close();
+}
+
 int main(int argc, const char * argv[]) {
 
   std::vector<int> data;
-  read_from_file(data, "inputdata.txt");
+    readFromFile(data, "inputdata.txt");
 
 
     int dataSize = data.size();
@@ -121,7 +118,7 @@ int main(int argc, const char * argv[]) {
             }
         }
 
-        writeToFile(result->histogram, "out" + std::to_string(numberOfThreads) + ".txt");
+        writeToFile(result, "out" + std::to_string(numberOfThreads) + ".txt");
         delete result;
    // }
 
