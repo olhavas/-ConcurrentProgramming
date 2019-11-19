@@ -50,18 +50,24 @@ struct Result {
         std::lock_guard<std::mutex>lock(_mutex);
         histogram[index]++;
     }
+    void initResult(){
+        for( auto& i : histogram)
+        {
+            i = 0;
+        }
+    }
 };
 
-void writeToFile(Result* result, std::string nameoffile)
+void writeToFile(const Result &result, std::string nameoffile)
 {
     std::ofstream  out;
     out.open("../"+nameoffile);
-    for(auto i =0; i < result->histogram.size(); i++)
+    for(auto i =0; i < result.histogram.size(); i++)
     {
-        out<<i<<'='<<result->histogram[i]<<'\n';
+        out<<i<<'='<<result.histogram[i]<<'\n';
     }
     auto suma = 0;
-    for(auto x : result->histogram) {
+    for(auto x : result.histogram) {
         suma+=x;
     }
     out<<"sum=" << suma;
@@ -71,22 +77,22 @@ void writeToFile(Result* result, std::string nameoffile)
 
 int main(int argc, const char * argv[]) {
 
-  std::vector<int> data;
-    readFromFile(data, "inputdata.txt");
 
-
-    int dataSize = data.size();
+    Result result ;
     int numberOfThreads = 1;
 
-   // while (numberOfThreads > 0) {
-        Result *result = new Result();
+    while (numberOfThreads > 0) {
+        std::vector<int> data;
+        readFromFile(data, "inputdata.txt");
+        int dataSize = data.size();
         numberOfThreads = 1;
+        result.initResult();
 
         std::cout << "num of thread <2, 4, 8,10 , 12 , 14 , 16>";
         std::cin >> numberOfThreads;
         if (numberOfThreads == 1) {
-            for (int j = 0; j <= dataSize; j++) {
-                result->incrementOnIndex(data[j]);
+            for (int j = 0; j < dataSize; j++) {
+                result.incrementOnIndex(data[j]);
             }
         } else {
 
@@ -101,7 +107,7 @@ int main(int argc, const char * argv[]) {
                     int first = i * blockSize;
                     int last = (i + 1) * blockSize - 1;
                     for (int j = first; j <= last; j++) {
-                        result->incrementOnIndex(data[j]);
+                        result.incrementOnIndex(data[j]);
                     }
                 }));
             }
@@ -109,7 +115,7 @@ int main(int argc, const char * argv[]) {
                 int first = (numberOfThreads - 1) * blockSize;
                 int last = ((numberOfThreads - 1) * blockSize - 1) + lastThreadSize;
                 for (int j = first; j <= last; j++) {
-                    result->incrementOnIndex(data[j]);
+                    result.incrementOnIndex(data[j]);
                 }
             }));
 
@@ -117,10 +123,8 @@ int main(int argc, const char * argv[]) {
                 if (thread.joinable()) thread.join();
             }
         }
-
-        writeToFile(result, "out" + std::to_string(numberOfThreads) + ".txt");
-        delete result;
-   // }
+        if(numberOfThreads>0) writeToFile(result, "out" + std::to_string(numberOfThreads) + ".txt");
+  }
 
     return 0;
 }
