@@ -103,7 +103,7 @@ int main(int argc, const char * argv[]) {
             std::vector<std::thread> threadVector;
 
             for (int i = 0; i < numberOfThreads - 1; i++) {
-                threadVector.push_back(std::thread([&]() {
+                threadVector.push_back(std::thread([=, &result, &data ]() {
                     int first = i * blockSize;
                     int last = (i + 1) * blockSize - 1;
                     for (int j = first; j <= last; j++) {
@@ -111,7 +111,7 @@ int main(int argc, const char * argv[]) {
                     }
                 }));
             }
-            threadVector.push_back(std::thread([&]() {
+            threadVector.push_back(std::thread([=, &result, &data]() {
                 int first = (numberOfThreads - 1) * blockSize;
                 int last = ((numberOfThreads - 1) * blockSize - 1) + lastThreadSize;
                 for (int j = first; j <= last; j++) {
@@ -123,7 +123,7 @@ int main(int argc, const char * argv[]) {
                 if (thread.joinable()) thread.join();
             }
         }
-        if(numberOfThreads>0) writeToFile(result, "out" + std::to_string(numberOfThreads) + ".txt");
+        if(numberOfThreads>0) writeToFile(result, "dout" + std::to_string(numberOfThreads) + ".txt");
   }
 
     return 0;
