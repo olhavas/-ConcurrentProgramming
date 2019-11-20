@@ -1,13 +1,11 @@
 #include <iostream>
 #include <mutex>
-#include <pthread.h>
 #include <thread>
 #include <string>
 #include <fstream>
 #include <cstdlib>
 #include <ctime>
 #include <vector>
-#include <cmath>
 
 
 const int32_t DSIZE = 10000000;
@@ -21,8 +19,7 @@ struct Result {
         histogram[index]++;
     }
     void initResult(){
-        for( auto& i : histogram)
-        {
+        for( auto& i : histogram) {
             i = 0;
         }
     }
@@ -56,7 +53,6 @@ void readFromFile(std::vector<int> &data, std::string nameoffile)
         }
         in.close();
     }
-
 }
 
 
@@ -90,7 +86,8 @@ void writeToFile(const std::vector<Time> &times, std::string nameoffile)
 
 
 int main(int argc, const char * argv[]) {
-
+//    srand(time(NULL));
+//    randAndSave();
 
     Result result ;
     int numberOfThreads = 1;
@@ -98,7 +95,6 @@ int main(int argc, const char * argv[]) {
     readFromFile(data, "inputdata.txt");
     clock_t start,stop;
     std::vector<Time> times;
-
     while (numberOfThreads > 0) {
 
         int dataSize = data.size();
@@ -122,8 +118,6 @@ int main(int argc, const char * argv[]) {
             time.time = static_cast<double>(stop - start)/CLOCKS_PER_SEC;
             times.push_back(time);
         } else {
-
-
             int blockSize = dataSize / numberOfThreads;
             int lastThreadSize = (dataSize - blockSize * numberOfThreads) + blockSize;
 
@@ -157,6 +151,5 @@ int main(int argc, const char * argv[]) {
         }
         writeToFile(result, "asyncout" + std::to_string(numberOfThreads) + ".txt");
   }
-
 
 }
