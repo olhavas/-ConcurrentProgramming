@@ -11,6 +11,27 @@
 
 
 const int32_t DSIZE = 10000000;
+struct Result {
+
+    Result() { histogram.fill(0);}
+    std::mutex _mutex;
+    std::array<int,256> histogram;
+    void incrementOnIndex(int index) {
+        //std::lock_guard<std::mutex>lock(_mutex);
+        histogram[index]++;
+    }
+    void initResult(){
+        for( auto& i : histogram)
+        {
+            i = 0;
+        }
+    }
+};
+
+struct Time {
+    double  time = 0;
+    int thread = 0;
+};
 
 void randAndSave()
 {
@@ -39,25 +60,6 @@ void readFromFile(std::vector<int> &data, std::string nameoffile)
 }
 
 
-
-
-struct Result {
-
-    Result() { histogram.fill(0);}
-    std::mutex _mutex;
-    std::array<int,256> histogram;
-    void incrementOnIndex(int index) {
-        std::lock_guard<std::mutex>lock(_mutex);
-        histogram[index]++;
-    }
-    void initResult(){
-        for( auto& i : histogram)
-        {
-            i = 0;
-        }
-    }
-};
-
 void writeToFile(const Result &result, std::string nameoffile)
 {
     std::ofstream  out;
@@ -75,25 +77,50 @@ void writeToFile(const Result &result, std::string nameoffile)
     out.close();
 }
 
+void writeToFile(const std::vector<Time> &times, std::string nameoffile)
+{
+    std::ofstream  out;
+    out.open("../"+nameoffile);
+    for(auto i =0; i < times.size(); i++)
+    {
+        out<<times[i].thread<<" thread(s) "<<times[i].time<<".s\n";
+    }
+    out.close();
+}
+
+
 int main(int argc, const char * argv[]) {
 
 
     Result result ;
     int numberOfThreads = 1;
+    std::vector<int> data;
+    readFromFile(data, "inputdata.txt");
+    clock_t start,stop;
+    std::vector<Time> times;
 
     while (numberOfThreads > 0) {
-        std::vector<int> data;
-        readFromFile(data, "inputdata.txt");
+
         int dataSize = data.size();
         numberOfThreads = 1;
         result.initResult();
+        Time time;
 
         std::cout << "num of thread <2, 4, 8,10 , 12 , 14 , 16>";
         std::cin >> numberOfThreads;
+        if (numberOfThreads < 0) {
+            writeToFile(times, "asynctimes.txt");
+            return 0;
+        }
         if (numberOfThreads == 1) {
+            start = clock();
             for (int j = 0; j < dataSize; j++) {
                 result.incrementOnIndex(data[j]);
             }
+            stop = clock();
+            time.thread = numberOfThreads;
+            time.time = static_cast<double>(stop - start)/CLOCKS_PER_SEC;
+            times.push_back(time);
         } else {
 
 
@@ -101,6 +128,7 @@ int main(int argc, const char * argv[]) {
             int lastThreadSize = (dataSize - blockSize * numberOfThreads) + blockSize;
 
             std::vector<std::thread> threadVector;
+            start = clock();
 
             for (int i = 0; i < numberOfThreads - 1; i++) {
                 threadVector.push_back(std::thread([=, &result, &data ]() {
@@ -122,9 +150,13 @@ int main(int argc, const char * argv[]) {
             for (auto &thread : threadVector) {
                 if (thread.joinable()) thread.join();
             }
+            stop = clock();
+            time.thread = numberOfThreads;
+            time.time = static_cast<double>(stop - start)/CLOCKS_PER_SEC;
+            times.push_back(time);
         }
-        if(numberOfThreads>0) writeToFile(result, "dout" + std::to_string(numberOfThreads) + ".txt");
+        writeToFile(result, "asyncout" + std::to_string(numberOfThreads) + ".txt");
   }
 
-    return 0;
+
 }
