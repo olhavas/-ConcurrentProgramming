@@ -116,20 +116,7 @@ class ProducentKonsument {
     }
 };
 
-//
-//void Thread1(ProducentKonsument* monitor){
-//    while( true ){
-//        monitor->consumtion();
-//    }
-//}
-//
-//
-//
-//void Thread2(ProducentKonsument* monitor){
-//    while( true ){
-//        monitor->do_insert_thread();
-//    }
-//}
+
 
 
 
@@ -137,7 +124,7 @@ int main(int argc, const char * argv[]) {
 //    srand(time(NULL));
 //    randAndSave();
 
-    int numberOfThreads = 20;
+    int numberOfThreads = 2*times10less;
     std::vector<int> data;
 
 
