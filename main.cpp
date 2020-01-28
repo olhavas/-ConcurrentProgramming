@@ -29,17 +29,17 @@ class ProducentKonsument {
 
     private:
         std::mutex _mutex;
+        std::mutex mutex_add;
+        std::mutex mutex_remove;
         std::condition_variable cv;
         int counter,in,out;
+        std::vector<int> buffer;
 
-    std::vector<int> buffer;
-
-
-    std::unordered_map<std::thread::id,Time> times;
-
-
+        std::unordered_map<std::thread::id,Time> times;
+        ProducentKonsument(int n) :counter(0), in(0),out(0), buffer(n) {times = std::unordered_map<std::thread::id,Time> ();};
     public:
-    ProducentKonsument(int n) :counter(0), in(0),out(0), buffer(n) {times = std::unordered_map<std::thread::id,Time> ();};
+    std::queue <std::thread> threads;
+
     void insert(int m){
 
         {
@@ -108,14 +108,29 @@ class ProducentKonsument {
             }
         }
     }
+    static void add(std::thread&& thread){
+       // get_buffer().mutex_add.lock();
+        get_buffer().threads.push(std::move(thread));
+       // get_buffer().mutex_add.unlock();
+    }
+    static bool isEmpty(){
+        return get_buffer().threads.empty();
+    }
+
+    static void remove() {
+        //get_buffer().mutex_remove.lock();
+        std::thread thread = std::move( get_buffer().threads.front());
+        get_buffer().threads.pop();
+        if (thread.joinable()) thread.join();
+        //get_buffer().mutex_remove.unlock();
+    }
     static void getMap() {
         for (auto const& pair: get_buffer().times) {
-            std::cout << "{" << pair.first << ": " << pair.second.time << "}\n";
+            std::cout <<  pair.first << ": " << pair.second.time << "\n";
         }
 
     }
 };
-
 
 
 
@@ -125,28 +140,41 @@ int main(int argc, const char * argv[]) {
 //    randAndSave();
 
     int numberOfThreads = 2*times10less;
+    std::cout<<numberOfThreads<<' '<< numberOfThreads/times10less<<"\n";
     std::vector<int> data;
-
-
-    std::vector<std::thread> threadVectorgr1;
-    std::vector<std::thread> threadVectorgr2;
+    int j = 0, ccounter =0,pcounter = 0;
+//    for (auto i = 0 ; i < (numberOfThreads+(numberOfThreads/times10less)); i++) {
+//
+//
+//        if(j==0 && ccounter< numberOfThreads){
+//            j++;
+//            ProducentKonsument::add(std::thread(&ProducentKonsument::consumtion));
+//            std::cout<<i<<"con\n";
+//            ccounter++;
+//        }
+//        else if(j>=1 && pcounter < numberOfThreads/times10less){
+//            j++;
+//            ProducentKonsument::add(std::thread(&ProducentKonsument::produce));
+//            std::cout<<i<<"prod\n";
+//            pcounter++;
+//            if(j == 9){j=0;}
+//
+//        }
+//        else  {
+//            std::cout <<i<<'\n';
+//        }
+//    }
 
     for (int i = 0; i < numberOfThreads; i++) {
-        threadVectorgr1.push_back(std::thread(&ProducentKonsument::consumtion));
+        ProducentKonsument::get_buffer().threads.push(std::thread(&ProducentKonsument::consumtion));
     }
-
-
     for (int i = 0; i < numberOfThreads/times10less; i++) {
-        threadVectorgr2.push_back(std::thread(&ProducentKonsument::produce));
+        ProducentKonsument::get_buffer().threads.push(std::thread(&ProducentKonsument::produce));
+    }
+    while (!ProducentKonsument::isEmpty()){
+        ProducentKonsument::remove();
     }
 
-    for (auto &thread : threadVectorgr1) {
-        if (thread.joinable()) thread.join();
-    }
-    for (auto &thread : threadVectorgr2) {
-        if (thread.joinable()) thread.join();
-    }
-    std::cout<<"done";
     ProducentKonsument::getMap();
 
 }
